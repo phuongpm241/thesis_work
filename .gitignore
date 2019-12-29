@@ -1,0 +1,12 @@
+.DS_Store
+._.DS_Store
+._ga_model
+.ipynb_checkpoints/
+sample/
+
+ga_model/._*
+
+util/._*
+util/__pycache__/*
+
+
