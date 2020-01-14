@@ -81,7 +81,8 @@ def ent_to_plain(e):
     :param e: "@entityLeft_hand"
     :return: "Left hand"
     """
-    return " ".join(e[len("@entity"):].split("_"))
+    # return " ".join(e[len("@entity"):].split("_"))
+    return e.replace("@entity","").replace("_", " ")
 
 def plain_to_ent(e):
     """
@@ -115,11 +116,12 @@ class JsonDataset:
         self.dataset_file = dataset_file
         self.dataset = load_json(self.dataset_file)
 
-    def json_to_plain(self, remove_notfound=False, stp="no-ent", include_q_cands=False):
+    def json_to_plain(self, remove_notfound=False, stp="no-ent", doc_ent=False, include_q_cands=False, cand_a=False):
         """
         :param remove_notfound: replace the truth answer by an equivalent answer (UMLS) found in the document 
         :param include_q_cands: whether to include entities in query in list of candidate answers
         :param stp: no-ent | ent; whether to mark entities in passage; if ent, a multiword entity is treated as 1 token
+        :param cand_a: whether to ensure truth answer must be contained in the list of candidate answers
         :return: {"id": "",
                   "p": "",
                   "q", "",
@@ -155,14 +157,19 @@ class JsonDataset:
                     fields["c"] = list(c)
                     assert a
                     fields["a"] = a
-                    document = remove_entity_marks(datum[DOC_KEY][TITLE_KEY] + " " + datum[DOC_KEY][CONTEXT_KEY]).replace(
-                        "\n", " ").lower()
+                    if cand_a and a not in c:
+                        fields["c"].append(a)
+
+                    if doc_ent:
+                        document = to_entities(datum[DOC_KEY][TITLE_KEY] + " " + datum[DOC_KEY][CONTEXT_KEY]).replace("\n", " ").lower()
+                    else:
+                        document = remove_entity_marks(datum[DOC_KEY][TITLE_KEY] + " " + datum[DOC_KEY][CONTEXT_KEY]).replace("\n", " ").lower()
+                        
                     fields["p"] = document
                     fields["q"] = remove_entity_marks(qa[QUERY_KEY]).replace("\n", " ").lower()
 
                 elif stp == "ent":
                     c = set(cand)
-                    c_q = set(cand_q)
                     a = ""
                     for ans in qa[ANS_KEY]:
                         if ans[ORIG_KEY] == "dataset":
@@ -178,9 +185,11 @@ class JsonDataset:
                                         a = umls_answer
                             if not found_umls:
                                 continue
-                    fields["c"] = list(c) + list(c_q)
+                    fields["c"] = list(c)
                     assert a
                     fields["a"] = a
+                    if cand_a and a not in c:
+                        fields["c"].append(a)
                     document = to_entities(datum[DOC_KEY][TITLE_KEY] + " " + datum[DOC_KEY][CONTEXT_KEY]).replace(
                         "\n", " ").lower()
                     fields["p"] = document

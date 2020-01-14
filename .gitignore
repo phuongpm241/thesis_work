@@ -3,7 +3,7 @@
 ._ga_model
 .ipynb_checkpoints/
 sample/
-
+._*
 ga_model/._*
 
 util/._*
