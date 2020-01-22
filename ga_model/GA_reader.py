@@ -43,8 +43,8 @@ class GA_reader(nn.Module):
             self.input_size=self.embed_size
             
         for i in range(n_layers-1):
-            doc_gru=nn.GRU(self.input_size if i==0 else 2*self.hidden_size,self.hidden_size,batch_first=True,bidirectional=True,dropout=dropout)
-            qry_gru=nn.GRU(self.input_size,                                self.hidden_size,batch_first=True,bidirectional=True,dropout=dropout)
+            doc_gru=nn.GRU(self.input_size if i==0 else 2*self.hidden_size,self.hidden_size,batch_first=True,bidirectional=True)#,dropout=dropout) - applied later
+            qry_gru=nn.GRU(self.input_size,                                self.hidden_size,batch_first=True,bidirectional=True)#,dropout=dropout)
             self.doc_Modulelist.append(doc_gru) # model.add_module(name,module) child module
             self.qry_Modulelist.append(qry_gru)
         # feat just use in doc to show if di in qry
@@ -54,8 +54,8 @@ class GA_reader(nn.Module):
         else:
             self.final_x_size=2*self.hidden_size
         #final layer
-        self.final_doc_layer = nn.GRU(self.final_x_size,self.hidden_size,batch_first=True,bidirectional=True,dropout=dropout)
-        self.final_qry_layer = nn.GRU(self.input_size,  self.hidden_size,batch_first=True,bidirectional=True,dropout=dropout)
+        self.final_doc_layer = nn.GRU(self.final_x_size,self.hidden_size,batch_first=True,bidirectional=True)#,dropout=dropout) -> doesn't need
+        self.final_qry_layer = nn.GRU(self.input_size,  self.hidden_size,batch_first=True,bidirectional=True)#,dropout=dropout)
         
     def forward(self,dw, dw_m,qw,qw_m,dt,qt,tt,tm, answear, candidate, candi_m, cloze_pos,feat):
 

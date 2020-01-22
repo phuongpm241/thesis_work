@@ -17,7 +17,7 @@ def closestanswer(ans, cands):
             small_dist = [dist, c]
     return small_dist
 
-def convert(inputname, savename):
+def convert(inputname, savename, remove_notfound=False, v1=False):
 
 	sampledata = load_json(filepath + inputname)
 
@@ -45,17 +45,34 @@ def convert(inputname, savename):
 	                break
 	            answers.append({'answer_start': answer_start, 'text': a})
 	            start = answer_start
-	        qas.append({
-	            'answers':answers,
-	            'question':remove_entity_marks(qa[QUERY_KEY]).replace("\n", " ").lower().replace('@placeholder', 'what').replace(
-	    '.', '?').replace("▶ ",""),
-	            'id':qa[ID_KEY],
-	            'is_impossible':not bool(answers)
-	        })
+
+	        is_impossible = (not bool(answers))
+
+	        if not v1:
+		        if remove_notfound and is_impossible:
+		        	continue
+
+		        qas.append({
+		            'answers':answers,
+		            'question':remove_entity_marks(qa[QUERY_KEY]).replace("\n", " ").lower().replace('@placeholder', 'what').replace(
+		    	'.', '?').replace("▶ ",""),
+		            'id':qa[ID_KEY],
+		            'is_impossible':is_impossible
+		        })
+	        else:
+	        	if is_impossible:
+	        		continue
+	        	qas.append({
+				    'answers':answers,
+				    'question':remove_entity_marks(qa[QUERY_KEY]).replace("\n", " ").lower().replace('@placeholder', 'what').replace(
+				'.', '?').replace("▶ ",""),
+				    'id':qa[ID_KEY]
+				})
+
 	    if len(qas) > 0:
 	        data.append({
 	            'title':title,
-	            'paragraphs':[{'context': context, 'qas':qas}]
+	            'paragraphs':[{'context': context, 'qas':qas}] #SQUAD can have small segments of the doc per query, CLICR use the entire context
 	        })
 
 	save = {'data':data, 'version':sampledata[VERSION_KEY]}
@@ -63,9 +80,9 @@ def convert(inputname, savename):
 	return 'successfully saved at {}'.format(filepath+savename)
 
 if __name__ == '__main__':
-	inputname = 'test1.0.json'
-	savename = 'clicr_test_squadstyle.1.0.json'
-	convert(inputname, savename)
+	inputname = 'clicr_original/train1.0.json'
+	savename = 'clicr_squad_v1/train1.0.json'
+	convert(inputname, savename, True, True)
 
 
 
