@@ -24,7 +24,7 @@ def to_vars(np_inputs,use_cuda,evaluate=False):
 def gru(rnn_model,batch_seq,batch_seq_mask):
 # input:       B,T,D
 # input_mask   B,T            (real length 1,1,1,0,0)
-  sequence_length=torch.sum(batch_seq_mask,1).squeeze(-1)         # B,
+  sequence_length=torch.sum(batch_seq_mask,1,keepdim=True).squeeze(-1)         # B,
 #  print(sequence_length.type())
 #  print(sequence_length.size())
   sort_len,sort_index=sequence_length.sort(dim=0,descending=True) # B,
@@ -34,7 +34,13 @@ def gru(rnn_model,batch_seq,batch_seq_mask):
   sorted_batchseq=batch_seq[sort_index.data]
 # pack input[0]:seq_len,D    every unvoid word embeddding
 # pack_input[1]:T,           every time stamp word number
-  pack_seq=torch.nn.utils.rnn.pack_padded_sequence(sorted_batchseq,sort_len.data.cpu().numpy(),batch_first=True)
+
+  # print(sort_len)
+  cpu_sort_len = torch.as_tensor(sort_len.data, dtype=torch.int64, device='cpu')
+  # print(cpu_sort_len)
+  # pack_seq=torch.nn.utils.rnn.pack_padded_sequence(sorted_batchseq,sort_len.data.cpu().numpy(),batch_first=True)
+  pack_seq=torch.nn.utils.rnn.pack_padded_sequence(sorted_batchseq,cpu_sort_len,batch_first=True)
+
   output_pack,hn=rnn_model(pack_seq)
   # unpack
   # output:   B,T,D
@@ -83,8 +89,8 @@ def evaluate(model, data, use_cuda):
         
         loss_batch,acc_batch=model(dw, dw_m,qw,qw_m,dt,qt,tt,tm, answear, candidate, candi_m, cloze_pos,feat)
         
-        loss+=loss_batch.cpu().data.numpy()[0]*bsize
-        acc+=acc_batch.cpu().data.numpy()[0]
+        loss+=loss_batch.item() #*bsize
+        acc+=acc_batch.item()
         n_examples += bsize
     # finish all ex in valid
     return loss/n_examples,acc/n_examples

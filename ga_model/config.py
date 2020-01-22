@@ -14,7 +14,7 @@ NUM_EPOCHS = 10
 VALIDATION_FREQ = 100
 # maximum word length for character model
 MAX_WORD_LEN = 10
-EMBED_SIZE=100
+EMBED_SIZE=200
 
 print_every=50  # 1   50
 eval_every=500  #100  10000
@@ -32,7 +32,9 @@ def get_params(dataset):
     elif dataset=='cbtne':
         return cbtne_params
     else:
-        raise ValueError("Dataset %s not found"%dataset)
+        # raise ValueError("Dataset %s not found"%dataset)
+        print("Dataset not found, use CNN config")
+        return clicr_params
 
 cbtcn_params = {
         'nhidden'   :   128,
@@ -77,5 +79,14 @@ cbtne_params = {
         'word2vec'  :   'word2vec_glove.txt',
         'train_emb' :   bool(0),
         'use_feat'  :   bool(1),
+        }
+
+clicr_params = {
+        'nhidden'   :   128,
+        'char_dim'  :   0,
+        'dropout'   :   0.2,
+        'word2vec'  :   'wikipedia-pubmed-and-PMC-w2v.txt',
+        'train_emb' :   bool(1),
+        'use_feat'  :   bool(0),
         }
 

@@ -36,7 +36,7 @@ def get_args():
     parser.register('type', 'bool', str2bool)
 
     parser.add_argument('--data_dir',  dest='data_dir', type=str, default='data',  help='.../data')
-    parser.add_argument('--dataset',   dest='dataset', type=str, default='wdw',    help='cnn || dailymail || cbtcn || cbtne || wdw')
+    parser.add_argument('--dataset',   dest='dataset', type=str, default='wdw',    help='cnn || dailymail || cbtcn || cbtne || wdw || clicr')
     parser.add_argument('--embed_dir', dest='embed_file', type=str, default=None,  help='word2vec_glove.txt in data file')
     parser.add_argument('--seed', dest='seed', type=int, default=3,                help='Seed for different experiments with same settings')
     parser.add_argument('--run_mode',  dest='mode', type=int, default=0,           help='0-train+test, 1-test only, 2-val only')
@@ -58,8 +58,8 @@ def get_args():
     hp_dict=vars(args)
 #  use default config
     if args.use_default_hp:
-        Defualt_hp_params=get_params(args.dataset)
-        hp_dict.update(Defualt_hp_params)
+        default_hp_params=get_params(args.dataset)
+        hp_dict.update(default_hp_params)
     data_dir=os.path.join(hp_dict['data_dir'],hp_dict['dataset'])
     # data/'word_vector.txt'
     if hp_dict['embed_file']:
@@ -98,6 +98,8 @@ def train(hp_dict,args,data_dir,save_path):
     logging.info("loading word2vec file ...")
     embed_init, embed_dim = \
         load_word2vec_embeddings(data.dictionary[0], hp_dict['embed_file'],EMBED_SIZE)
+
+    print("Embedding dimension", embed_dim)
     logging.info("embedding dim: {}".format(embed_dim))
     logging.info("initialize model ...")
     
@@ -149,9 +151,19 @@ def train(hp_dict,args,data_dir,save_path):
            [dw, dw_m,qw,qw_m,dt,qt,tt,tm, answear, candidate, candi_m, cloze_pos,feat], use_cuda=USE_CUDA)
             
             loss_, acc_ = model(dw, dw_m,qw,qw_m,dt,qt,tt,tm, answear, candidate, candi_m, cloze_pos,feat) # tensor.float size 1
+
+            # print('loss_', loss_)
+            # print('acc_', acc_)
+
+            # print(loss_.data)
+            # print(loss_.shape)
             #print(acc_.cpu().data.numpy())
-            loss += loss_.cpu().data.numpy()[0] # numpy [1]
-            acc += acc_.cpu().data.numpy()[0]
+            # loss += loss_.data.cpu().numpy()[0] # numpy [1]
+            # acc += acc_.cpu().data.cpu().numpy()[0]
+
+            loss += loss_.item()
+            acc += acc_.item()
+
             it += 1
             opt.zero_grad()
             loss_.backward()

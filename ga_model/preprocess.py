@@ -171,7 +171,7 @@ class preprocessing():
     
     def parse_all_file(self,files_path,word_dict,char_dict, use_chars):
         files=glob.glob(files_path+'/*.question')
-        # 每个训练样本，后面跟文件名
+        
         questions = [self.parse_one_file(f,word_dict,char_dict, use_chars) + (f,) for f in files]
         return questions
     # write all sample's  ducument ,' ',query into a  text_file.txt  

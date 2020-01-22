@@ -58,6 +58,7 @@ class GA_reader(nn.Module):
         self.final_qry_layer = nn.GRU(self.input_size,  self.hidden_size,batch_first=True,bidirectional=True,dropout=dropout)
         
     def forward(self,dw, dw_m,qw,qw_m,dt,qt,tt,tm, answear, candidate, candi_m, cloze_pos,feat):
+
         dw_embed=self.embed(dw.long()) # B,T,embed
         qw_embed=self.embed(qw.long())
         
@@ -98,10 +99,11 @@ class GA_reader(nn.Module):
             qur_qi_embed_transpose=qur_qi_embed.permute(0,2,1)# B,2h,Q
             
             inter=torch.bmm(doc_di_embed,qur_qi_embed_transpose)  # B,T,Q
-            b2q_w=F.softmax(inter.view(-1,inter.size(-1))).view_as(inter) # B,T,Q  softmax attention to Q
+            # b2q_w=F.softmax(inter.view(-1,inter.size(-1)),dim=0).view_as(inter) # B,T,Q  softmax attention to Q
+            b2q_w = F.softmax(inter, dim=2).view_as(inter)
             q_mask=qw_m.unsqueeze(1).float().expand_as(b2q_w)                      # B,T,Q
             b2q_w=b2q_w*q_mask                                             # no attention to void qi
-            b2q_w_norm=b2q_w / torch.sum(b2q_w,2).expand_as(b2q_w)         # normalized attention, to get att vector 
+            b2q_w_norm=b2q_w / torch.sum(b2q_w,2,keepdim=True).expand_as(b2q_w)         # normalized attention, to get att vector 
             #every di's attention vector B,T,Q      B,Q,2h
             weighted_attention=torch.bmm(b2q_w_norm,qur_qi_embed)     # B,T,2h
             new_xi=eval(self.gating_fn)(doc_di_embed, weighted_attention)      # B,T,2h (if not cat)
@@ -110,6 +112,7 @@ class GA_reader(nn.Module):
         if self.use_feat:# dw in qry or not
             feat_emb=self.feat_embed(feat.long())               # B,T,2
             dw_embed=torch.cat([dw_embed,feat_emb],dim=-1)      # B,T,final_x_size  xi
+            
         doc_embed,_,_=gru(self.final_doc_layer,dw_embed,dw_m)        # B,T,2h            di
         qry_embed,_,_=gru(self.final_qry_layer,qw_embed,qw_m)        # B,Q,2h            qi
         # ---@ph's embed---
@@ -118,8 +121,8 @@ class GA_reader(nn.Module):
         cloze_embed=qry_embed.gather(1,cloze_pos_expand.long()).squeeze(1)                 # B,2h
         #---@ph's attention---
         s=torch.bmm(doc_embed,cloze_embed.unsqueeze(-1)).squeeze(-1) # B,T  to each word
-        s_mask=F.softmax(s) * candi_m.float()                        # B,T  softmax attention to D /only word in candidate
-        s_normal=s_mask/torch.sum(s_mask,dim=1).expand_as(s_mask)    # B,T  normalize
+        s_mask=F.softmax(s,dim=1) * candi_m.float()                        # B,T  softmax attention to D /only word in candidate
+        s_normal=s_mask/torch.sum(s_mask,dim=1,keepdim=True).expand_as(s_mask)    # B,T  normalize
         # ---sum attention---
         cand_prob=torch.bmm(s_normal.unsqueeze(1),candidate.float()).squeeze(1)   # B,N_cand    row:each candi's probality(include all words in it)
         # ---compute loss,acc---
@@ -129,6 +132,7 @@ class GA_reader(nn.Module):
         loss=torch.mean(-torch.log(predict_prob))
         # Accuracy
         _,predict_cand=torch.max(cand_prob,1)  # B,1
+
         Accuracy=torch.sum(torch.eq(predict_cand.view(-1).float(),answear_index.view(-1).float()))
         return loss,Accuracy
             
