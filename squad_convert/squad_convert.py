@@ -54,8 +54,8 @@ def convert(inputname, savename, remove_notfound=False, v1=False):
 
 		        qas.append({
 		            'answers':answers,
-		            'question':remove_entity_marks(qa[QUERY_KEY]).replace("\n", " ").lower().replace('@placeholder', 'what').replace(
-		    	'.', '?').replace("▶ ",""),
+		            'question':remove_entity_marks(qa[QUERY_KEY]).replace("\n", " ").lower().replace('@placeholder', '').replace(
+		    	'.', '').replace("▶ ",""),
 		            'id':qa[ID_KEY],
 		            'is_impossible':is_impossible
 		        })
@@ -64,8 +64,8 @@ def convert(inputname, savename, remove_notfound=False, v1=False):
 	        		continue
 	        	qas.append({
 				    'answers':answers,
-				    'question':remove_entity_marks(qa[QUERY_KEY]).replace("\n", " ").lower().replace('@placeholder', 'what').replace(
-				'.', '?').replace("▶ ",""),
+				    'question':remove_entity_marks(qa[QUERY_KEY]).replace("\n", " ").lower().replace('@placeholder', '').replace(
+				'.', '').replace("▶ ",""),
 				    'id':qa[ID_KEY]
 				})
 
