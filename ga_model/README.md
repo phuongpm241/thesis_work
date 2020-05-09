@@ -7,16 +7,5 @@ Prerequisites
 ========================
 
 * Python 3.6
-* Pytorch 0.1.12_2
-
-Data
-=================
-You can find data and pretained word embeddings file though this [link](https://drive.google.com/drive/folders/0B7aCzQIaRTDUZS1EWlRKMmt3OXM).  
-
-You need to create your own data file, put data and pretrained word embedding file in it.
-
-
-Training
-=================
-train dailymail data from raw:    
-python main.py --data_dir 'path to your data file'  --dataset dailymail   --embed_dir word2vec_glove.txt
+* Pytorch 1.3.1
+* CUDA 10.1
